@@ -1,3 +1,5 @@
+require 'securerandom'
+
 class AuthenticationService::Session
   attr_reader :session_id
 
