@@ -4,7 +4,7 @@ require "authentication-service/version"
 
 Gem::Specification.new do |s|
   s.name        = "authentication-service"
-  s.version     = Authentication::Service::VERSION
+  s.version     = AuthenticationService::VERSION
   s.authors     = ["Evgeny Myasishchev"]
   s.email       = ["evgeny.myasishchev@gmail.com"]
   s.homepage    = ""
