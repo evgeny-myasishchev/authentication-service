@@ -1,4 +1,21 @@
 module AuthenticationService::Rails
+  
+  def self.included(base)
+    base.extend ClassMethods
+  end
+    
+  module ClassMethods
+    def authentication_service(options)
+      
+    end
+    
+    def behave_as_sessins_controller
+      self.send(:include, AuthenticationService::Rails::SessionsControllerActions)
+    end
+  end
+  
+  autoload :SessionsControllerActions, 'authentication-service/rails/sessions-controller-actions'
+  
   attr_accessor :current_session
   
   def authenticated?
@@ -11,7 +28,7 @@ module AuthenticationService::Rails
   end
   
   def authentication_service
-    @authentication_service ||= AuthenticationService.new
+    @authentication_service ||= AuthenticationService::Base.new
   end
   
   def authentication_service=(value)
