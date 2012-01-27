@@ -2,6 +2,8 @@ module AuthenticationService::Persistance
   class SessionsRepository
     include AuthenticationService::Persistance::ModelHelpers
     
+    attr_reader :model_class
+    
     def initialize(model_class)
       @model_class = model_class
     end

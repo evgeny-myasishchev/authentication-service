@@ -1,7 +1,7 @@
 class AuthenticationService::Base
   attr_reader :accounts_repository, :sessions_repository
   
-  def initialize(accounts_repository = AuthenticationService::Persistance::AccountsRepository.new, sessions_repository = AuthenticationService::Persistance::SessionsRepository.new)
+  def initialize(accounts_repository, sessions_repository)
     @accounts_repository = accounts_repository
     @sessions_repository = sessions_repository
   end

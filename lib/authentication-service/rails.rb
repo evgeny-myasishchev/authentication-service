@@ -5,8 +5,19 @@ module AuthenticationService::Rails
   end
     
   module ClassMethods
+    attr_reader :account_class, :session_class
+    
     def authentication_service(options)
+      options = {
+        :account => nil,
+        :session => nil
+      }.merge(options)
       
+      raise "Account persistance model class not assigned" unless options[:account]
+      raise "Session persistance model class not assigned" unless options[:session]
+      
+      @account_class = options[:account]
+      @session_class = options[:session]
     end
     
     def behave_as_sessins_controller
@@ -28,7 +39,11 @@ module AuthenticationService::Rails
   end
   
   def authentication_service
-    @authentication_service ||= AuthenticationService::Base.new
+    @authentication_service ||= begin
+      accounts_repository = AuthenticationService::Persistance::AccountsRepository.new(self.class.account_class)
+      sessions_repository = AuthenticationService::Persistance::SessionsRepository.new(self.class.session_class)
+      AuthenticationService::Base.new(accounts_repository, sessions_repository)
+    end
   end
   
   def authentication_service=(value)

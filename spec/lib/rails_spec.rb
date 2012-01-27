@@ -30,6 +30,41 @@ describe AuthenticationService::Rails do
     @controller.authentication_service = @authentication_service
   end
   
+  describe "self.class.authentication_service" do
+    it "should fail if options does not have account" do
+      session_class = mock(:session_class)
+      lambda { 
+        AuthenticationSpecController.authentication_service :account => nil, :session => session_class 
+      }.should raise_error(RuntimeError)
+    end
+    
+    it "should fail if options does not have session" do
+      account_class = mock(:account_class)
+      lambda {  
+        AuthenticationSpecController.authentication_service :account => nil, :account => account_class
+      }.should raise_error(RuntimeError)
+    end
+    
+    it "should assign account and session classes" do
+      account_class = mock(:account_class)
+      session_class = mock(:session_class)
+      AuthenticationSpecController.authentication_service :account => account_class, :session => session_class
+      AuthenticationSpecController.account_class.should be account_class
+      AuthenticationSpecController.session_class.should be session_class
+    end
+  end
+  
+  describe "authentication_service=" do
+    it "should return instance with configured account and session classes" do
+      account_class = mock(:account_class)
+      session_class = mock(:session_class)
+      AuthenticationSpecController.authentication_service :account => account_class, :session => session_class
+      @controller.authentication_service = nil
+      @controller.authentication_service.accounts_repository.model_class.should be account_class
+      @controller.authentication_service.sessions_repository.model_class.should be session_class
+    end
+  end
+  
   describe "authenticated?" do
     it "should return true if current sesion is not nil" do
       @controller.current_session = mock(:session, :blank? => false)
