@@ -29,10 +29,10 @@ class AuthenticationService::Base
     account = accounts_repository.find_by_email(login)
     return nil unless account
     
-    password_hash = Account.hash_for_password(password)
+    password_hash = AuthenticationService::Account.hash_for_password(password)
     return nil unless account.password_hash == password_hash
     
-    sessions_repository.create Session.create_new(account, ip_address)
+    sessions_repository.create AuthenticationService::Session.create_new(account, ip_address)
   end
   
   def sign_out(session)
