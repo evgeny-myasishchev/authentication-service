@@ -1,3 +1,3 @@
 module AuthenticationService
-  VERSION = "0.0.1.a1"
+  VERSION = "0.0.1.b"
 end
