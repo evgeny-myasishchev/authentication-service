@@ -1,0 +1,39 @@
+= Authentication-Service
+
+Authentication support for Rails applications. Can be also used with non Rails apps.
+
+== Quick start
+
+In your Gemfile:
+  gem 'authentication-service'
+
+In your ApplicationController:
+  include AuthenticationService::Rails
+  authentication_service :account => Persistance::Account, :session => Persistance::Session
+  before_filter :authenticate
+  
+Generate required stuff:
+  rails generate authentication_service:all
+It generates models (with corresponding migrations):
+* persistance/account.rb - the account model
+* persistance/session.rb - used to persist sessions
+It generates sessions controller and view:
+* sessions_controller.rb - controller to authenticate users
+* views/sessions/new.html.erb - login form template
+It injects routes.
+
+== Enabling authentication
+
+In ApplicationController before_filter enables authentication for entire app:
+  before_filter :authenticate
+
+It can be also skipped for entire controller or for individual actions:
+  skip_filter :authenticate #Skips for entire controller
+  skip_filter :authenticate, :only => [:index] #Skips just for index action
+  before_filter :authenticate, :only => [:index] #Authenticates just index action.
+
+== Testing
+
+To mark your controller as authenticated just add following line:
+  @controller.current_session = mock(:current_session)
+ 
