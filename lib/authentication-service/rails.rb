@@ -5,18 +5,32 @@ module AuthenticationService::Rails
   end
     
   module ClassMethods
+    # Using OptionsStore class to preserve values during rails code reload in development mode.
     class OptionsStore
       class << self
         attr_accessor :account_class, :session_class
+        attr_accessor :accounts_repository, :sessions_repository
       end
     end
     
+    def store
+      OptionsStore
+    end
+    
     def account_class
-      OptionsStore.account_class
+      store.account_class
     end
     
     def session_class
-      OptionsStore.session_class
+      store.session_class
+    end
+    
+    def accounts_repository
+      store.accounts_repository
+    end
+    
+    def sessions_repository
+      store.sessions_repository
     end
     
     def authentication_service(options)
@@ -25,11 +39,14 @@ module AuthenticationService::Rails
         :session => nil
       }.merge(options)
       
-      raise "Account persistance model class not assigned" unless options[:account]
-      raise "Session persistance model class not assigned" unless options[:session]
+      raise "Account persistance model class not assigned" unless options[:account] || options[:accounts_repository]
+      raise "Session persistance model class not assigned" unless options[:session] || options[:sessions_repository]
       
       OptionsStore.account_class = options[:account]
       OptionsStore.session_class = options[:session]
+      
+      OptionsStore.accounts_repository = options[:accounts_repository]
+      OptionsStore.sessions_repository = options[:sessions_repository]
     end
     
     def behave_as_sessins_controller
@@ -52,10 +69,14 @@ module AuthenticationService::Rails
   
   def authentication_service
     @authentication_service ||= begin
-      raise "Authentication service not configured. Please use authentication_service to configure it." unless self.class.account_class
-      raise "Authentication service not configured. Please use authentication_service to configure it." unless self.class.session_class
-      accounts_repository = AuthenticationService::Persistance::AccountsRepository.new(self.class.account_class)
-      sessions_repository = AuthenticationService::Persistance::SessionsRepository.new(self.class.session_class)
+      begin
+        raise "Authentication service not configured. Please use authentication_service to configure it." 
+      end unless self.class.account_class || self.class.accounts_repository
+      begin
+        raise "Authentication service not configured. Please use authentication_service to configure it."
+      end unless self.class.session_class || self.class.sessions_repository
+      accounts_repository = self.class.accounts_repository || AuthenticationService::Persistance::AccountsRepository.new(self.class.account_class)
+      sessions_repository = self.class.sessions_repository || AuthenticationService::Persistance::SessionsRepository.new(self.class.session_class)
       AuthenticationService::Base.new(accounts_repository, sessions_repository)
     end
   end
