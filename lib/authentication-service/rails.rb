@@ -8,6 +8,7 @@ module AuthenticationService::Rails
     # Using OptionsStore class to preserve values during rails code reload in development mode.
     class OptionsStore
       class << self
+        attr_accessor :authentication_service
         attr_accessor :account_class, :session_class
         attr_accessor :accounts_repository, :sessions_repository
       end
@@ -34,6 +35,11 @@ module AuthenticationService::Rails
     end
     
     def authentication_service(options)
+      if options.instance_of?(AuthenticationService::Base)
+        store.authentication_service = options
+        return;
+      end
+
       options = {
         :account => nil,
         :session => nil
@@ -69,6 +75,7 @@ module AuthenticationService::Rails
   
   def authentication_service
     @authentication_service ||= begin
+      # return self.class.store.authentication_service unless self.class.store.authentication_service.nil?
       begin
         raise "Authentication service not configured. Please use authentication_service to configure it." 
       end unless self.class.account_class || self.class.accounts_repository

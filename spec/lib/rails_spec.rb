@@ -60,6 +60,12 @@ describe AuthenticationService::Rails do
       AuthenticationSpecController.accounts_repository.should be accounts_repository
       AuthenticationSpecController.sessions_repository.should be sessions_repository
     end
+
+    it "should assign authentication service instance to store if instance is passed" do
+      instance = AuthenticationService::Base.new mock(:accounts_repo), mock(:sessions_repo)
+      AuthenticationSpecController.authentication_service instance
+      AuthenticationSpecController.store.authentication_service.should be instance
+    end
   end
   
   describe "authentication_service" do
@@ -79,6 +85,12 @@ describe AuthenticationService::Rails do
       @controller.authentication_service = nil
       @controller.authentication_service.accounts_repository.should be accounts_repository
       @controller.authentication_service.sessions_repository.should be sessions_repository
+    end
+
+    it "should return an instance if it was explicitly assigned" do
+      instance = AuthenticationService::Base.new mock(:accounts_repo), mock(:sessions_repo)
+      AuthenticationSpecController.authentication_service instance
+      @controller.authentication_service.should be instance
     end
   end
   
