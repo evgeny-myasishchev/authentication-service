@@ -1,27 +1,30 @@
 require 'spec_helper'
 
-class AuthenticationSpecController
-  include AuthenticationService::Rails
-
-  # authentication_service { :sign_in_action => '/sign-in', 
-  #   :sign_out_action => '/sign-out'}
-  
-  attr_reader :session
-  attr_accessor :request
-  
-  def initialize
-    @session = {}
-  end
-  
-  attr_accessor :respond_to_format
-  def respond_to(&block)
-    yield(@respond_to_format)
-  end
-end
 
 describe AuthenticationService::Rails do
+  let(:controller_class) {
+    Class.new do
+      include AuthenticationService::Rails
+
+      # authentication_service { :sign_in_action => '/sign-in', 
+      #   :sign_out_action => '/sign-out'}
+
+      attr_reader :session
+      attr_accessor :request
+
+      def initialize
+        @session = {}
+      end
+
+      attr_accessor :respond_to_format
+      def respond_to(&block)
+        yield(@respond_to_format)
+      end
+    end
+  }
+
   before(:each) do
-    @controller         = AuthenticationSpecController.new
+    @controller         = controller_class.new
     @controller.request = mock(:request)
   end
   
@@ -34,37 +37,37 @@ describe AuthenticationService::Rails do
     it "should fail if options does not have account model class or accounts repository instance" do
       session_class = mock(:session_class)
       lambda { 
-        AuthenticationSpecController.authentication_service :account => nil, :accounts_repository => nil, :session => session_class 
+        controller_class.authentication_service :account => nil, :accounts_repository => nil, :session => session_class 
       }.should raise_error(RuntimeError)
     end    
     
     it "should fail if options does not have session model class or sessions repository instance" do
       account_class = mock(:account_class)
       lambda {  
-        AuthenticationSpecController.authentication_service :session => nil, :sessions_repository => nil, :account => account_class
+        controller_class.authentication_service :session => nil, :sessions_repository => nil, :account => account_class
       }.should raise_error(RuntimeError)
     end
     
     it "should assign account and session model classes" do
       account_class = mock(:account_class)
       session_class = mock(:session_class)
-      AuthenticationSpecController.authentication_service :account => account_class, :session => session_class
-      AuthenticationSpecController.account_class.should be account_class
-      AuthenticationSpecController.session_class.should be session_class
+      controller_class.authentication_service :account => account_class, :session => session_class
+      controller_class.account_class.should be account_class
+      controller_class.session_class.should be session_class
     end
     
     it "should assign accounts and sessions repositories" do
       accounts_repository = mock(:accounts_repository)
       sessions_repository = mock(:sessions_repository)
-      AuthenticationSpecController.authentication_service :accounts_repository => accounts_repository, :sessions_repository => sessions_repository
-      AuthenticationSpecController.accounts_repository.should be accounts_repository
-      AuthenticationSpecController.sessions_repository.should be sessions_repository
+      controller_class.authentication_service :accounts_repository => accounts_repository, :sessions_repository => sessions_repository
+      controller_class.accounts_repository.should be accounts_repository
+      controller_class.sessions_repository.should be sessions_repository
     end
 
     it "should assign authentication service instance to store if instance is passed" do
       instance = AuthenticationService::Base.new mock(:accounts_repo), mock(:sessions_repo)
-      AuthenticationSpecController.authentication_service instance
-      AuthenticationSpecController.store.authentication_service.should be instance
+      controller_class.authentication_service instance
+      controller_class.store.authentication_service.should be instance
     end
   end
   
@@ -72,7 +75,7 @@ describe AuthenticationService::Rails do
     it "should return instance with configured account and session classes" do
       account_class = mock(:account_class)
       session_class = mock(:session_class)
-      AuthenticationSpecController.authentication_service :account => account_class, :session => session_class
+      controller_class.authentication_service :account => account_class, :session => session_class
       @controller.authentication_service = nil
       @controller.authentication_service.accounts_repository.model_class.should be account_class
       @controller.authentication_service.sessions_repository.model_class.should be session_class
@@ -81,7 +84,7 @@ describe AuthenticationService::Rails do
     it "should return instance with configured account and session repositories" do
       accounts_repository = mock(:accounts_repository)
       sessions_repository = mock(:sessions_repository)
-      AuthenticationSpecController.authentication_service :accounts_repository => accounts_repository, :sessions_repository => sessions_repository
+      controller_class.authentication_service :accounts_repository => accounts_repository, :sessions_repository => sessions_repository
       @controller.authentication_service = nil
       @controller.authentication_service.accounts_repository.should be accounts_repository
       @controller.authentication_service.sessions_repository.should be sessions_repository
@@ -89,7 +92,7 @@ describe AuthenticationService::Rails do
 
     it "should return an instance if it was explicitly assigned" do
       instance = AuthenticationService::Base.new mock(:accounts_repo), mock(:sessions_repo)
-      AuthenticationSpecController.authentication_service instance
+      controller_class.authentication_service instance
       @controller.authentication_service.should be instance
     end
   end
