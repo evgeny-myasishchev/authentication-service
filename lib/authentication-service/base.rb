@@ -38,4 +38,14 @@ class AuthenticationService::Base
   def sign_out(session)
     sessions_repository.destroy(session)
   end  
+
+  def self.create(options)
+    raise "Account persistance model class or repository is not assigned" unless options[:account_class] || options[:accounts_repository]
+    raise "Session persistance model class or repository is not assigned" unless options[:session_class] || options[:sessions_repository]
+
+    accounts_repository = options[:accounts_repository] || AuthenticationService::Persistance::AccountsRepository.new(options[:account_class])
+    sessions_repository = options[:sessions_repository] || AuthenticationService::Persistance::SessionsRepository.new(options[:session_class])
+
+    new(accounts_repository, sessions_repository)
+  end
 end

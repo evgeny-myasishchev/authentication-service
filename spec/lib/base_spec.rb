@@ -103,4 +103,36 @@ describe AuthenticationService::Base do
       @authentication_service.sign_out(@session).should be @session
     end
   end
+
+  describe "create from options" do
+    it "should return instance with configured account and session classes" do
+      account_class = mock(:account_class)
+      session_class = mock(:session_class)
+      authentication_service = described_class.create :account_class => account_class, :session_class => session_class
+      authentication_service.accounts_repository.model_class.should be account_class
+      authentication_service.sessions_repository.model_class.should be session_class
+    end
+    
+    it "should return instance with configured account and session repositories" do
+      accounts_repository = mock(:accounts_repository)
+      sessions_repository = mock(:sessions_repository)
+      authentication_service = described_class.create :accounts_repository => accounts_repository, :sessions_repository => sessions_repository
+      authentication_service.accounts_repository.should be accounts_repository
+      authentication_service.sessions_repository.should be sessions_repository
+    end
+
+    it "should fail if options does not have account model class or accounts repository instance" do
+      session_class = mock(:session_class)
+      lambda { 
+        described_class.create :account => nil, :accounts_repository => nil, :session => session_class 
+      }.should raise_error(RuntimeError)
+    end    
+    
+    it "should fail if options does not have session model class or sessions repository instance" do
+      account_class = mock(:account_class)
+      lambda {  
+        described_class.create :session => nil, :sessions_repository => nil, :account => account_class
+      }.should raise_error(RuntimeError)
+    end
+  end
 end

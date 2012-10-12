@@ -1,5 +1,7 @@
 require "authentication-service/version"
 
+require 'authentication-service/engine' if defined?(::Rails)
+
 module AuthenticationService
   autoload :Account, 'authentication-service/account'
   autoload :Base, 'authentication-service/base'
