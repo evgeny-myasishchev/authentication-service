@@ -1,10 +1,11 @@
 require 'spec_helper'
 
 describe AuthenticationService::Base do
+  let(:hashing_algorithm) { mock(:hashing_algorithm) }
   before(:each) do
     @sessions_repository    = mock(:sessions_repository)
     @accounts_repository    = mock(:accounts_repository)
-    @authentication_service = AuthenticationService::Base.new(@accounts_repository, @sessions_repository)
+    @authentication_service = AuthenticationService::Base.new(@accounts_repository, @sessions_repository, hashing_algorithm: hashing_algorithm)
     
     @account = Account.new(10, "mail@domain.com", "some-password-hash")
     @session = Session.new("session-id", @account, "127.0.0.1", nil, nil)
@@ -12,15 +13,8 @@ describe AuthenticationService::Base do
   
   describe "register_account" do
     it "should use accounts repository to create new account" do
-      account = Account.new(10, "mail@domain.com", "some-password-hash")
+      account = mock(:account)
       @accounts_repository.should_receive(:create).with("mail@domain.com", "some-password").and_return(account)
-      
-      @authentication_service.register_account "mail@domain.com", "some-password"
-    end
-    
-    it "should return created account instance" do
-      account = Account.new(10, "mail@domain.com", "some-password-hash")
-      @accounts_repository.stub(:create).and_return(account)
       
       @authentication_service.register_account("mail@domain.com", "some-password").should be account
     end
@@ -61,7 +55,7 @@ describe AuthenticationService::Base do
       @accounts_repository.stub(:find_by_email) { @account }
       Session.stub(:create_new) { @session }
       @sessions_repository.stub(:create) { @session }
-      Account.stub(:hash_for_password) { "some-password-hash" }
+      hashing_algorithm.stub(:hash_password)      
     end
     
     it "should use accounts repository to obtain accounts" do
@@ -70,7 +64,10 @@ describe AuthenticationService::Base do
     end
     
     describe "account is found and password is valid" do
-      
+      before(:each) do
+        hashing_algorithm.should_receive(:hash_password).with("some-password").and_return("some-password-hash")
+      end
+
       it "should return new session instance" do
         @authentication_service.authenticate_by_login("mail@domain.com", "some-password", "127.0.0.1").should be @session
       end
@@ -87,8 +84,8 @@ describe AuthenticationService::Base do
     end
     
     it "should return nil if account is found but password is invalid" do
-      Account.stub(:hash_for_password) { "invalid-password-hash" }
-      @authentication_service.authenticate_by_login("mail@domain.com", "some-password", "127.0.0.1").should be_nil
+      hashing_algorithm.should_receive(:hash_password).with("some-password-432") { "invalid-password-hash" }
+      @authentication_service.authenticate_by_login("mail@domain.com", "some-password-432", "127.0.0.1").should be_nil
     end
   end
   
@@ -111,6 +108,17 @@ describe AuthenticationService::Base do
       authentication_service = described_class.create :account_class => account_class, :session_class => session_class
       authentication_service.accounts_repository.model_class.should be account_class
       authentication_service.sessions_repository.model_class.should be session_class
+    end
+
+    it "should use supplied hashing_algorithm" do
+      account_class = mock(:account_class)
+      session_class = mock(:session_class)
+      hashing_algorithm = mock(:hashing_algorithm)
+      authentication_service = described_class.create :account_class => account_class, 
+        :session_class => session_class,
+        hashing_algorithm: hashing_algorithm
+      authentication_service.accounts_repository.hashing_algorithm.should be hashing_algorithm
+      authentication_service.hashing_algorithm.should be hashing_algorithm
     end
     
     it "should return instance with configured account and session repositories" do

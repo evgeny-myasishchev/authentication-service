@@ -1,35 +1,37 @@
 require 'spec_helper'
 
 describe AuthenticationService::Persistance::AccountsRepository do
+  let(:hashing_algorithm) { mock(:hashing_algorithm) }
   before(:each) do
-    @model_class = mock(:account_model_class)
-    @repository  = AuthenticationService::Persistance::AccountsRepository.new @model_class
+    @model_class = mock(:account_model_class)    
+    @repository  = AuthenticationService::Persistance::AccountsRepository.new @model_class, hashing_algorithm
   end
   
   describe "create" do
-    it "should create corresponding database record" do
-      password_hash = AuthenticationService::Account.hash_for_password("some-password")
+    before(:each) do
+      hashing_algorithm.should_receive(:hash_password).with("some-password-448") { "hashed-password-448" }
+    end
+
+    it "should create corresponding database record and hash password with the supplied algorithm" do
       @model_class.should_receive(:create!).
-        with(:email => "mail@domain.com", :password_hash => password_hash).
-        and_return(mock(:account_rec, :id => 999, :email => "mail@domain.com", :password_hash => password_hash))
-      @repository.create "mail@domain.com", "some-password"
+        with(:email => "mail@domain.com", :password_hash => "hashed-password-448").
+        and_return(mock(:account_rec, :id => 999, :email => "mail@domain.com", :password_hash => "hashed-password-448"))
+      @repository.create "mail@domain.com", "some-password-448"
     end
     
     it "return Account instance" do
-      password_hash = AuthenticationService::Account.hash_for_password("some-password")
       @model_class.stub(:create!).
-        and_return(mock(:account_rec, :id => 999, :email => "mail@domain.com", :password_hash => password_hash))
-      account = @repository.create "mail@domain.com", "some-password"
+        and_return(mock(:account_rec, :id => 999, :email => "mail@domain.com", :password_hash => "hashed-password-448"))
+      account = @repository.create "mail@domain.com", "some-password-448"
       account.should be_instance_of AuthenticationService::Account
       account.account_id.should eql 999
       account.email.should eql "mail@domain.com"
     end
     
     it "should hash password" do
-      AuthenticationService::Account.should_receive(:hash_for_password).with("some-password").and_return("hashed-password")
       @model_class.stub(:create!).
         and_return(mock(:account_rec, :id => 999, :email => "mail@domain.com", :password_hash => "hashed-password"))
-      account = @repository.create "mail@domain.com", "some-password"
+      account = @repository.create "mail@domain.com", "some-password-448"
       account.password_hash.should eql "hashed-password"
     end
   end

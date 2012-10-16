@@ -1,9 +1,13 @@
 class AuthenticationService::Base
-  attr_reader :accounts_repository, :sessions_repository
+  attr_reader :accounts_repository, :sessions_repository, :hashing_algorithm
   
-  def initialize(accounts_repository, sessions_repository)
+  def initialize(accounts_repository, sessions_repository, options = {})
+    @options = {
+      hashing_algorithm: nil
+    }.merge! options
     @accounts_repository = accounts_repository
     @sessions_repository = sessions_repository
+    @hashing_algorithm = @options[:hashing_algorithm] || AuthenticationService::HashingAlgorithm.default
   end
   
   def register_account(email, password)
@@ -29,7 +33,7 @@ class AuthenticationService::Base
     account = accounts_repository.find_by_email(login)
     return nil unless account
     
-    password_hash = AuthenticationService::Account.hash_for_password(password)
+    password_hash = hashing_algorithm.hash_password(password)
     return nil unless account.password_hash == password_hash
     
     sessions_repository.create AuthenticationService::Session.create_new(account, ip_address)
@@ -42,10 +46,9 @@ class AuthenticationService::Base
   def self.create(options)
     raise "Account persistance model class or repository is not assigned" unless options[:account_class] || options[:accounts_repository]
     raise "Session persistance model class or repository is not assigned" unless options[:session_class] || options[:sessions_repository]
-
-    accounts_repository = options[:accounts_repository] || AuthenticationService::Persistance::AccountsRepository.new(options[:account_class])
+    hashing_algorithm = options[:hashing_algorithm] || AuthenticationService::HashingAlgorithm.default
+    accounts_repository = options[:accounts_repository] || AuthenticationService::Persistance::AccountsRepository.new(options[:account_class], hashing_algorithm)
     sessions_repository = options[:sessions_repository] || AuthenticationService::Persistance::SessionsRepository.new(options[:session_class])
-
-    new(accounts_repository, sessions_repository)
+    new(accounts_repository, sessions_repository, hashing_algorithm: hashing_algorithm)
   end
 end
