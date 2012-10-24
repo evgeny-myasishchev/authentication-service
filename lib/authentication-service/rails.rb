@@ -23,9 +23,14 @@ module AuthenticationService::Rails
     !current_session.blank?
   end
   
-  def authenticate
+  def authenticate options = {}
+    options = {
+      redirect: true
+    }.merge! options
     authenticate_from_session if session[:authenticated_session_id]
-    redirect_not_authenticated unless authenticated?
+    if(options[:redirect]) 
+      redirect_not_authenticated unless authenticated?
+    end
   end
   
   def authentication_service

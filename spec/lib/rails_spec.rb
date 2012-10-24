@@ -72,6 +72,12 @@ describe AuthenticationService::Rails do
       @controller.should_not_receive(:redirect_not_authenticated)
       @controller.authenticate      
     end
+
+    it "should not redirect if special option supplied" do
+      @controller.current_session = mock(:session, :blank? => true)
+      @controller.should_not_receive(:redirect_not_authenticated)
+      @controller.authenticate redirect: false
+    end
   end
   
   describe "authenticate_from_session" do
